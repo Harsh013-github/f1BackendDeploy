@@ -1,0 +1,126 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "CloudFormation template to create Elastic Beanstalk Application and Environment for f1-backend",
+  "Parameters": {
+    "ApplicationName": {
+      "Type": "String",
+      "Default": "f1-backend",
+      "Description": "Elastic Beanstalk Application Name"
+    },
+    "EnvironmentName": {
+      "Type": "String",
+      "Default": "f1-backend-env",
+      "Description": "Elastic Beanstalk Environment Name"
+    },
+    "InstanceType": {
+      "Type": "String",
+      "Default": "t3.micro",
+      "Description": "EC2 Instance Type",
+      "AllowedValues": ["t3.micro", "t3.small", "t3.medium"]
+    }
+  },
+  "Resources": {
+    "ElasticBeanstalkApplication": {
+      "Type": "AWS::ElasticBeanstalk::Application",
+      "Properties": {
+        "ApplicationName": {
+          "Ref": "ApplicationName"
+        },
+        "Description": "F1 Backend API Application"
+      }
+    },
+    "ElasticBeanstalkEnvironment": {
+      "Type": "AWS::ElasticBeanstalk::Environment",
+      "Properties": {
+        "ApplicationName": {
+          "Ref": "ElasticBeanstalkApplication"
+        },
+        "EnvironmentName": {
+          "Ref": "EnvironmentName"
+        },
+        "SolutionStackName": "64bit Amazon Linux 2023 v6.0.11 running Node.js 22",
+        "OptionSettings": [
+          {
+            "Namespace": "aws:elasticbeanstalk:environment",
+            "OptionName": "EnvironmentType",
+            "Value": "SingleInstance"
+          },
+          {
+            "Namespace": "aws:autoscaling:launchconfiguration",
+            "OptionName": "InstanceType",
+            "Value": {
+              "Ref": "InstanceType"
+            }
+          },
+          {
+            "Namespace": "aws:autoscaling:launchconfiguration",
+            "OptionName": "IamInstanceProfile",
+            "Value": "aws-elasticbeanstalk-ec2-role"
+          },
+          {
+            "Namespace": "aws:elasticbeanstalk:cloudwatch:logs",
+            "OptionName": "StreamLogs",
+            "Value": "true"
+          },
+          {
+            "Namespace": "aws:elasticbeanstalk:cloudwatch:logs",
+            "OptionName": "DeleteOnTerminate",
+            "Value": "false"
+          },
+          {
+            "Namespace": "aws:elasticbeanstalk:cloudwatch:logs",
+            "OptionName": "RetentionInDays",
+            "Value": "7"
+          },
+          {
+            "Namespace": "aws:elasticbeanstalk:application",
+            "OptionName": "Application Healthcheck URL",
+            "Value": "/api/health"
+          },
+          {
+            "Namespace": "aws:elasticbeanstalk:application:environment",
+            "OptionName": "NODE_ENV",
+            "Value": "production"
+          },
+          {
+            "Namespace": "aws:elasticbeanstalk:application:environment",
+            "OptionName": "PORT",
+            "Value": "8080"
+          },
+          {
+            "Namespace": "aws:elasticbeanstalk:application:environment",
+            "OptionName": "API",
+            "Value": "/api"
+          }
+        ]
+      },
+      "DependsOn": "ElasticBeanstalkApplication"
+    }
+  },
+  "Outputs": {
+    "ApplicationName": {
+      "Description": "Elastic Beanstalk Application Name",
+      "Value": {
+        "Ref": "ElasticBeanstalkApplication"
+      }
+    },
+    "EnvironmentName": {
+      "Description": "Elastic Beanstalk Environment Name",
+      "Value": {
+        "Ref": "ElasticBeanstalkEnvironment"
+      }
+    },
+    "EnvironmentURL": {
+      "Description": "Elastic Beanstalk Environment URL",
+      "Value": {
+        "Fn::GetAtt": ["ElasticBeanstalkEnvironment", "EndpointURL"]
+      }
+    },
+    "EnvironmentStatus": {
+      "Description": "Elastic Beanstalk Environment Status",
+      "Value": {
+        "Fn::GetAtt": ["ElasticBeanstalkEnvironment", "Status"]
+      }
+    }
+  }
+}
