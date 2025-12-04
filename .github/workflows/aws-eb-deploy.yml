@@ -65,7 +65,9 @@ jobs:
               --application-name ${{ env.EB_APPLICATION_NAME }} \
               --environment-name ${{ env.EB_ENVIRONMENT_NAME }} \
               --solution-stack-name "64bit Amazon Linux 2023 v6.0.10 running Node.js 22" \
-              --instance-type t3.micro \
+              --option-settings \
+                Namespace=aws:autoscaling:launchconfiguration,OptionName=InstanceType,Value=t3.micro \
+                Namespace=aws:elasticbeanstalk:environment,OptionName=EnvironmentType,Value=SingleInstance \
               --region ${{ env.AWS_REGION }}
             echo "Waiting for environment to be ready..."
             sleep 30
