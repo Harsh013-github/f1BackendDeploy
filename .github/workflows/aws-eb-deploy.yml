@@ -10,7 +10,7 @@ env:
   EB_APPLICATION_NAME: f1-backend
   EB_ENVIRONMENT_NAME: f1-backend-env
   DEPLOY_PACKAGE_NAME: deploy-${{ github.sha }}.zip
-  S3_BUCKET_NAME: f1-backend-us-east-1
+  S3_BUCKET_NAME: f1-backend-013210
 
 jobs:
   deploy:
