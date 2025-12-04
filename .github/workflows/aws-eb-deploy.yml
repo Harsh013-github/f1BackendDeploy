@@ -40,28 +40,38 @@ jobs:
 
       - name: Create EB Application if not exists
         run: |
-          aws elasticbeanstalk describe-applications \
+          if ! aws elasticbeanstalk describe-applications \
             --application-names ${{ env.EB_APPLICATION_NAME }} \
-            --region ${{ env.AWS_REGION }} 2>/dev/null || \
-          aws elasticbeanstalk create-application \
-            --application-name ${{ env.EB_APPLICATION_NAME }} \
-            --region ${{ env.AWS_REGION }}
+            --region ${{ env.AWS_REGION }} 2>&1 | grep -q "${{ env.EB_APPLICATION_NAME }}"; then
+            echo "Creating EB Application: ${{ env.EB_APPLICATION_NAME }}"
+            aws elasticbeanstalk create-application \
+              --application-name ${{ env.EB_APPLICATION_NAME }} \
+              --region ${{ env.AWS_REGION }}
+          else
+            echo "EB Application already exists"
+          fi
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Create EB Environment if not exists
         run: |
-          aws elasticbeanstalk describe-environments \
+          if ! aws elasticbeanstalk describe-environments \
             --application-name ${{ env.EB_APPLICATION_NAME }} \
             --environment-names ${{ env.EB_ENVIRONMENT_NAME }} \
-            --region ${{ env.AWS_REGION }} 2>/dev/null || \
-          aws elasticbeanstalk create-environment \
-            --application-name ${{ env.EB_APPLICATION_NAME }} \
-            --environment-name ${{ env.EB_ENVIRONMENT_NAME }} \
-            --solution-stack-name "64bit Amazon Linux 2 v5.10.1 running Node.js 22" \
-            --instance-type t3.micro \
-            --region ${{ env.AWS_REGION }}
+            --region ${{ env.AWS_REGION }} 2>&1 | grep -q "${{ env.EB_ENVIRONMENT_NAME }}"; then
+            echo "Creating EB Environment: ${{ env.EB_ENVIRONMENT_NAME }}"
+            aws elasticbeanstalk create-environment \
+              --application-name ${{ env.EB_APPLICATION_NAME }} \
+              --environment-name ${{ env.EB_ENVIRONMENT_NAME }} \
+              --solution-stack-name "64bit Amazon Linux 2023 v6.0.10 running Node.js 22" \
+              --instance-type t3.micro \
+              --region ${{ env.AWS_REGION }}
+            echo "Waiting for environment to be ready..."
+            sleep 30
+          else
+            echo "EB Environment already exists"
+          fi
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
