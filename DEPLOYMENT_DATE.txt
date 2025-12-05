@@ -1,3 +1,0 @@
-EB Environment Created: 2025-12-04
-Deployment triggered automatically
-Status: Ready and Green
