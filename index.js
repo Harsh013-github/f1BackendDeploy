@@ -153,7 +153,7 @@ if (SERVER_PUBLIC_URL)
 const swaggerSpec = {
   openapi: '3.0.0',
   info: {
-    title: 'F1 Cars API',
+    title: 'F1 Cars API- Swagger',
     version: '1.0.0',
     description: 'API documentation for F1 Cars backend (Node + Supabase)',
   },
