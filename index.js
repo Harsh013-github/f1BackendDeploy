@@ -1,4 +1,3 @@
-// index.js
 require('dotenv').config();
 
 const express = require('express');
@@ -10,16 +9,12 @@ const swaggerUi = require('swagger-ui-express');
 const app = express();
 app.set('trust proxy', true);
 
-// ─────────────────────────────────────────────
-// Config
-// ─────────────────────────────────────────────
 const PORT = Number(process.env.PORT || 3000);
 const API = normalizeBase(process.env.API || '/api');
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const SERVER_PUBLIC_URL = (process.env.SERVER_PUBLIC_URL || '').replace(/\/+$/, '');
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 
-// Supabase
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ANON_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY;
@@ -31,13 +26,11 @@ if (!SUPABASE_URL || !SERVICE_ROLE) {
 const db = createClient(SUPABASE_URL, SERVICE_ROLE);
 const dbAnon = ANON_KEY ? createClient(SUPABASE_URL, ANON_KEY) : null;
 
-// Log database connection and tables
 async function logDatabaseInfo() {
   try {
     console.log('📊 Database Connection Info:');
     console.log('URL:', SUPABASE_URL);
     
-    // List all tables
     const { count: carCount, error: tablesError } = await db
       .from('f1_cars')
       .select('*', { count: 'exact', head: true });
@@ -49,7 +42,6 @@ async function logDatabaseInfo() {
       console.log('Total records:', carCount);
     }
 
-    // Check auth tables
     const { count: userCount, error: usersError } = await db
       .from('auth.users')
       .select('*', { count: 'exact', head: true });
@@ -65,15 +57,10 @@ async function logDatabaseInfo() {
   }
 }
 
-// Call the function when server starts
 logDatabaseInfo();
 
-// ─────────────────────────────────────────────
-// Middleware
-// ─────────────────────────────────────────────
 app.use(express.json({ limit: '1mb' }));
 
-// CORS (allow all origins)
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin) {
@@ -94,9 +81,6 @@ app.use((req, _res, next) => {
   next();
 });
 
-// ─────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────
 function normalizeBase(s) {
   if (!s.startsWith('/')) s = '/' + s;
   if (s.length > 1) s = s.replace(/\/+$/, '');
@@ -120,9 +104,6 @@ function auth(req, res, next) {
   }
 }
 
-// ─────────────────────────────────────────────
-// Validation
-// ─────────────────────────────────────────────
 const carSchema = Joi.object({
   name: Joi.string().required(),
   manufacturer: Joi.string().required(),
@@ -143,9 +124,6 @@ const loginSchema = Joi.object({
   password: Joi.string().min(8).max(100).required(),
 });
 
-// ─────────────────────────────────────────────
-// Swagger Setup
-// ─────────────────────────────────────────────
 const swaggerServers = [{ url: API, description: 'Relative base (same origin)' }];
 if (SERVER_PUBLIC_URL)
   swaggerServers.push({ url: `${SERVER_PUBLIC_URL}${API}`, description: 'Absolute (env)' });
@@ -251,14 +229,10 @@ const swaggerSpec = {
 
 app.use(`${API}/docs`, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// ─────────────────────────────────────────────
-// Routes
-// ─────────────────────────────────────────────
 const r = express.Router();
 
 r.get('/', (_req, res) => ok(res, { message: 'Welcome to F1 Cars API 🚀' }));
 
-// Auth
 r.post('/auth/signup', ah(async (req, res) => {
   const { error } = signupSchema.validate(req.body);
   if (error) return bad(res, 400, 'VALIDATION_ERROR', error.details[0].message);
@@ -295,7 +269,6 @@ r.post('/auth/login', ah(async (req, res) => {
   ok(res, { token, user: { id: data.user.id, email: data.user.email } }, 'Login successful');
 }));
 
-// Cars CRUD
 r.get('/cars', auth, ah(async (_req, res) => {
   const { data, error } = await db.from('f1_cars').select('*').order('created_at', { ascending: false });
   if (error) return bad(res, 500, 'DB', error.message);
@@ -335,16 +308,12 @@ r.delete('/cars/:id', auth, ah(async (req, res) => {
 
 app.use(API, r);
 
-// Error handling
 app.use((req, res) => bad(res, 404, 'NOT_FOUND', `Route ${req.method} ${req.originalUrl} not found`));
 app.use((err, _req, res, _next) => {
   console.error('Unhandled error:', err);
   bad(res, 500, 'SERVER_ERROR', 'Internal server error', NODE_ENV === 'development' ? err.stack : undefined);
 });
 
-// ─────────────────────────────────────────────
-// Server Start
-// ─────────────────────────────────────────────
 const displayBase = SERVER_PUBLIC_URL ? `${SERVER_PUBLIC_URL}${API}` : `http://localhost:${PORT}${API}`;
 app.listen(PORT, () => {
   console.log(`✅ Env: ${NODE_ENV}`);

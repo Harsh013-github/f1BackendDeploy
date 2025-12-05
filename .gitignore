@@ -14,3 +14,10 @@ yarn-error.log*
 *.swp
 *.swo
 *~
+.ebignore
+.ebextensions/
+*.pem
+.git/
+.gitignore
+package-lock.json
+yarn.lock
